@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ImageBackground } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';  // Importando o AsyncStorage
 
 export default function LoginScreen({ navigation }) {
     const [email, setEmail] = useState('');
@@ -12,10 +13,22 @@ export default function LoginScreen({ navigation }) {
             setError('Por favor, preencha todos os campos');
             return;
         }
-
+    
         try {
             const response = await axios.post('http://192.168.11.100:4000/login', { email, password });
-            console.log(response.data);
+            console.log('Resposta completa da API:', response.data);  // Log completo da resposta
+    
+            const { token } = response.data;  // Apenas extraímos o token agora
+            console.log('Token:', token);
+    
+            if (!token) {
+                throw new Error('Token ausente');
+            }
+    
+            // Armazenar apenas o token no AsyncStorage
+            await AsyncStorage.setItem('userToken', token);  // Armazenando o token
+    
+            // Como o userId não está mais sendo retornado, podemos seguir para a tela inicial
             navigation.navigate('Home');
         } catch (error) {
             console.error('Error during login:', error);
@@ -26,7 +39,6 @@ export default function LoginScreen({ navigation }) {
     const isButtonDisabled = !email || !password;
 
     return (
-
         <View style={styles.container}>
             <Text style={styles.title}>Bem-vindo</Text>
             <Text style={styles.subtitle}>Faça login para continuar</Text>
@@ -51,9 +63,9 @@ export default function LoginScreen({ navigation }) {
             />
 
             <TouchableOpacity 
-            style={[styles.button, isButtonDisabled && styles.buttonDisabled]} 
-            onPress={handleLogin}
-            disabled={isButtonDisabled}
+                style={[styles.button, isButtonDisabled && styles.buttonDisabled]} 
+                onPress={handleLogin}
+                disabled={isButtonDisabled}
             >
                 <Text style={styles.buttonText}>Entrar</Text>
             </TouchableOpacity>
@@ -62,24 +74,16 @@ export default function LoginScreen({ navigation }) {
                 <Text style={styles.registerText}>Ainda não tem uma conta? Registre-se</Text>
             </TouchableOpacity>
         </View>
-
     );
 }
 
 const styles = StyleSheet.create({
-    background: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        width: '100%',
-        backgroundColor:'white'
-    },
     container: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
         padding: 16,
-      },
+    },
     title: {
         fontSize: 34,
         fontWeight: 'bold',
@@ -101,10 +105,6 @@ const styles = StyleSheet.create({
         paddingLeft: 15,
         fontSize: 16,
         backgroundColor: '#fff',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.1,
-        shadowRadius: 6,
     },
     button: {
         backgroundColor: '#2d87f0',
@@ -112,15 +112,11 @@ const styles = StyleSheet.create({
         width: '100%',
         borderRadius: 10,
         alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 5 },
-        shadowOpacity: 0.2,
-        shadowRadius: 6,
         marginTop: 10,
     },
     buttonDisabled: {
-    backgroundColor: '#cccccc',
-  },
+        backgroundColor: '#cccccc',
+    },
     buttonText: {
         color: '#fff',
         fontSize: 18,

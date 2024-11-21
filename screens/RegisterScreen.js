@@ -3,46 +3,50 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'reac
 import axios from 'axios';
 
 export default function RegisterScreen({ navigation }) {
-  // Estados para armazenar os dados dos campos
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirmation, setPasswordConfirmation] = useState('');
 
-  // Função para lidar com o registro
   const handleRegister = async () => {
-    // Verifica se as senhas são iguais
     if (password !== passwordConfirmation) {
       Alert.alert('Erro', 'As senhas não coincidem.');
       return;
     }
 
-    // Envia os dados para o backend
     try {
       const response = await axios.post('http://192.168.11.100:4000/register', {
-
+        name,
         email,
         password,
       });
 
       if (response.status === 201) {
         Alert.alert('Sucesso', 'Usuário registrado com sucesso!');
-        // Redireciona para a tela de login após o registro bem-sucedido
         navigation.navigate('Login');
       }
     } catch (error) {
       console.error(error);
-      Alert.alert('Erro', 'Ocorreu um erro ao registrar o usuário.');
+      if (error.response && error.response.status === 400) {
+        Alert.alert('Erro', error.response.data.error || 'Erro ao registrar usuário.');
+      } else {
+        Alert.alert('Erro', 'Erro desconhecido ao registrar usuário.');
+      }
     }
   };
+
   const isButtonDisabled = !name || !email || !password || !passwordConfirmation;
 
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Registrar</Text>
 
-
-      {/* Campo de email */}
+      <TextInput
+        style={styles.input}
+        placeholder="Nome"
+        value={name}
+        onChangeText={setName}
+      />
       <TextInput
         style={styles.input}
         placeholder="Email"
@@ -50,8 +54,6 @@ export default function RegisterScreen({ navigation }) {
         onChangeText={setEmail}
         keyboardType="email-address"
       />
-
-      {/* Campo de senha */}
       <TextInput
         style={styles.input}
         placeholder="Senha"
@@ -59,8 +61,6 @@ export default function RegisterScreen({ navigation }) {
         onChangeText={setPassword}
         secureTextEntry
       />
-
-      {/* Campo de confirmação de senha */}
       <TextInput
         style={styles.input}
         placeholder="Confirmar Senha"
@@ -68,8 +68,6 @@ export default function RegisterScreen({ navigation }) {
         onChangeText={setPasswordConfirmation}
         secureTextEntry
       />
-
-      {/* Botão para registrar o usuário */}
       <TouchableOpacity
         style={[styles.button, isButtonDisabled && styles.buttonDisabled]}
         onPress={handleRegister}
@@ -77,6 +75,7 @@ export default function RegisterScreen({ navigation }) {
       >
         <Text style={styles.buttonText}>Registrar</Text>
       </TouchableOpacity>
+
       <TouchableOpacity onPress={() => navigation.navigate('Login')}>
         <Text style={styles.registerText}>Já possui uma conta? Faça o login.</Text>
       </TouchableOpacity>
@@ -90,7 +89,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: "white"
+    backgroundColor: "white",
   },
   header: {
     fontSize: 24,
@@ -132,7 +131,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
-},
+  },
   registerText: {
     color: '#2d87f0',
     fontSize: 16,
